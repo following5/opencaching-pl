@@ -275,8 +275,7 @@ return new class extends UpdateScript
         $this->assertTrue('dbResultFetchOneRowOnly', 32, $row['uuid'] == 'uuid1');
 
         $col = $this->db->dbFetchOneColumnArray(
-            $this->db->simpleQuery("SELECT id FROM ".self::TABLE),
-            'id'
+            $this->db->simpleQuery("SELECT id FROM ".self::TABLE)
         );
         $this->assertTrue('dbFetchOneColumnArray', 33, $col[0] == 1);
 

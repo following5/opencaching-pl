@@ -102,7 +102,7 @@ class CacheNote extends BaseObject
             ORDER BY caches.name
             LIMIT $limit OFFSET $offset", $userId);
 
-        return $db->dbFetchOneColumnArray($stmt, 'cache_id');
+        return $db->dbFetchOneColumnArray($stmt);
     }
 
     public static function getNotesByCacheIds(array $cacheIds, $userId)

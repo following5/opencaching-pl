@@ -57,8 +57,7 @@ class UpdateScript
             $ids = $this->db->dbFetchOneColumnArray(
                 $this->db->simpleQuery(
                     "SELECT `".$idColumn."` FROM `".$table."`"
-                ),
-                $idColumn
+                )
             );
             foreach ($ids as $id) {
                 $key = I18n::getTranslationKey($table, $id);

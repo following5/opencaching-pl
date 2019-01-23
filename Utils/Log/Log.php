@@ -10,14 +10,11 @@ use lib\Objects\User\User;
 
 class Log
 {
-
     const EVENT_OWNERNOTIFY = 1;
-
     const EVENT_MAILWATCHLIST = 2;
-
     const EVENT_DELETECACHE = 4;
-
     const EVENT_AUTOARCHIVE = 6;
+    const EVENT_USERDELETE = 7;
 
     /**
      * Inserts log entry to email_user table - about mails send user 2 user
@@ -68,5 +65,40 @@ class Log
                 return '';
                 break;
         }
+    }
+
+    public static function getLogs()
+    {
+        return ['logentries', 'email_user', 'cache_access_logs'];
+    }
+
+    public static function cleanup($log, $months)
+    {
+        if (!is_numeric($months)) {
+            throw new \Exception('invalid months value: ' . $months);
+        }
+        if ($months <= 0) {
+            return;
+        }
+
+        switch ($log) {
+            case 'logentries':
+                $datefield = 'logtime';
+                break;
+            case 'email_user':
+                $datefield = 'date_generated';
+                break;
+            case 'cache_access_logs':
+                $datefield = 'event_date';
+                break;
+            default:
+                throw new \Exception('unknown log: ' . $log);
+        }
+        OcDb::instance()->multiVariableQuery(
+            "DELETE FROM `".$log."`
+            WHERE DATEDIFF(NOW(), `".$datefield."`) > 30 * :1
+            LIMIT 2", // TODO: remove limit
+            $months
+        );
     }
 }

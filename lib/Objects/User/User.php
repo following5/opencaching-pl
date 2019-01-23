@@ -3,6 +3,7 @@ namespace lib\Objects\User;
 
 use Utils\Generators\TextGen;
 use Utils\Generators\Uuid;
+use Utils\Log\Log;
 use lib\Objects\Coordinates\Coordinates;
 use lib\Objects\GeoCache\GeoCache;
 use lib\Objects\OcConfig\OcConfig;
@@ -976,5 +977,125 @@ class User extends UserCommons
         }
     }
 
-}
 
+    /**
+     * Check if any content in the database links to this user
+     * 
+     * @return boolean
+     */
+    public static function hasSubmittedContent($userId)
+    {
+        foreach ([
+            // caching
+            'badge_user' => 'user_id',
+            'cache_logs' => 'user_id',
+            'caches' => 'user_id',
+            'cache_moved' => 'user_id',
+            'cache_rating' => 'user_id',
+            'chowner' => 'user_id',  // may have been cache owner 
+            'geokret_log' => 'user_id',
+            'mp3' => 'user_id',
+            'pictures' => 'user_id',
+            'PowerTrail_actionsLog' => 'userId',
+            'PowerTrail_comments' => 'userId',
+            'PowerTrail_owners' => 'userId',
+            'powertrail_progress' => 'user_id',
+            'reports' => 'user_id',
+            'scores' => 'user_id',
+
+            // admin
+            'admin_user_notes' => 'admin_id',
+            'approval_status' => 'user_id',
+            'email_schemas' => 'author_id',
+            'news' => 'user_id',
+            'reports' => 'responsible_id',
+            'reports_log' => 'user_id',
+            'reports_poll_votes' => 'user_id',
+
+        ] as $table => $userIdColumn) {
+
+            if ($this->db->multiVariableQueryValue(
+                'SELECT 1 FROM `'.$table.'` WHERE `'.$userIdColumn.'` = :1 LIMIT 1',
+                0,
+                $userId
+            )) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Delete user account.
+     */
+    public static function delete($userId)
+    {
+        $userName = $this->getUserName();
+
+        if ($this->getIsActive()) {
+            throw new \Exception('cannot delete active user '. $userId);
+        }
+        if ($this->hasSubmittedContent()) {
+            throw new \Exception('cannot delete user that submitted content '. $userId);
+        }
+
+        $this->db->beginTransaction();
+
+        $this->db->multiVariableQuery('
+            DELETE FROM route_points
+            WHERE route_id IN (
+                SELECT route_id FROM routes WHERE user_id = :1
+            ', $userId
+        );
+
+        foreach ([
+
+            // temporary and cached data
+            'CACHE_ACCESS_LOGS' => 'user_id',
+            'cache_visits2' => 'user_id_ip',
+            'email_user' => 'from_user_id',
+            'email_user' => 'to_user_id',
+            'logentries' => 'userid',
+            'notify_waiting' => 'user_id',
+            'sys_sessions' => 'user_id',
+            'user_finds' => 'user_id',
+            'user_nick_history' => 'user_id',
+            'watches_waiting' => 'user_id',
+
+            // okapi statistics
+            'okapi_stats_temp' => 'user_id',            
+            'okapi_stats_hourly' => 'user_id',
+            'okapi_stats_monthly' => 'user_id',
+
+            // settings
+            'cache_ignore' => 'user_id',
+            'cache_watches' => 'user_id',
+            'GeoKretyAPI' => 'userID',
+            'queries' => 'user_id',
+            'recommendation_plan' => 'userId',
+            'reports_watches' => 'user_id',  // admin report watches
+            'routes' => 'user_id',
+            'user_neighbourhoods' => 'user_id',
+            'user_preferences' => 'user_id',
+            'user_settings' => 'user_id',
+
+            // notes
+            'cache_mod_cords' => 'user_id',
+            'cache_notes' => 'user_id',
+            'admin_user_notes' => 'user_id',  // admin notes for this user
+
+            'user' => 'user_id',
+
+        ] as $table => $userIdColumn) {
+
+            $this->db->multiVariableQuery(
+                'DELETE FROM `'.$table.'` WHERE `'.$userIdColumn.'` = :1',
+                $userId
+            );
+        }
+
+        Log::logentry(EVENT_USERDELETE, $userId, 0, 0, "", null);
+
+        $this->db->commit();
+    }
+}

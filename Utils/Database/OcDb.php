@@ -174,21 +174,26 @@ class OcDb extends OcPdo
      * Returns array with values of $keyCol column.
      *
      * @param PDOStatement $stmt
-     * @param string $keyCol - column name to use for result key
+     * @param string $keyCol|null - column name to use for result key, or null for first column
      * @return array
      */
-    public function dbFetchOneColumnArray(PDOStatement $stmt, $keyCol, $caseSensitiveKey = true)
+    public function dbFetchOneColumnArray(PDOStatement $stmt, $keyCol = null, $caseSensitiveKey = true)
     {
         $result = [];
         if (!is_null($stmt)) {
-            if (!$caseSensitiveKey) {
+            if ($keyCol !== null && !$caseSensitiveKey) {
                 $keyCol = strtolower($keyCol);
             }
             while ($row = $this->dbResultFetch($stmt, OcDb::FETCH_ASSOC)) {
-                if (!$caseSensitiveKey) {
-                    $row = array_change_key_case($row, CASE_LOWER);
+                if ($keyCol === null) {
+                    reset($row);
+                    $result[] = current($row);
+                } else {
+                    if (!$caseSensitiveKey) {
+                        $row = array_change_key_case($row, CASE_LOWER);
+                    }
+                    $result[] = $row[$keyCol];
                 }
-                $result[] = $row[$keyCol];
             }
 
             return $result;

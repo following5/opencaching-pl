@@ -1689,8 +1689,7 @@ class GeoCache extends GeoCacheCommons
 
         if ($sizesInUse === null) {
             $sizesInUse = self::db()->dbFetchOneColumnArray(
-                self::db()->simpleQuery("SELECT DISTINCT size FROM caches"),
-                'size'
+                self::db()->simpleQuery("SELECT DISTINCT size FROM caches")
             );
         }
         return $sizesInUse;

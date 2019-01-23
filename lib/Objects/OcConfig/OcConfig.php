@@ -505,15 +505,26 @@ final class OcConfig extends ConfigReader
 
     public function getCronjobSchedule($job = null)
     {
-        if ($this->cronjobsConfig == null) {
-            $this->cronjobsConfig = self::getConfig('cronjobs', 'cronjobs');
-        }
+        $this->loadCronjobsConfig();
         if ($job === null) {
             return $this->cronjobsConfig['schedule'];
         } elseif (isset($this->cronjobsConfig['schedule'][$job])) {
             return $this->cronjobsConfig['schedule'][$job];
         } else {
             return null;
+        }
+    }
+
+    public function getCronjobSettings($job)
+    {
+        $this->loadCronjobsConfig();
+        return $this->cronjobsConfig[$job];
+    }
+
+    private static function loadCronjobsConfig()
+    {
+        if ($this->cronjobsConfig == null) {
+            $this->cronjobsConfig = self::getConfig('cronjobs', 'cronjobs');
         }
     }
 

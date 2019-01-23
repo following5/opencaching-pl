@@ -172,4 +172,69 @@ class MultiUserQueries extends BaseObject
         });
     }
 
+    /**
+     * Returns array of user account IDs what where not activated.
+     *
+     * @param int $daysSinceSignup
+     * @return array
+     */
+    public static function getNotActivatedUserIds($daysSinceSignup)
+    {
+        return self::$db->dbFetchOneColumnArray(
+            self::$db->multiVariableQuery(
+                "SELECT user_id
+                FROM user
+                WHERE
+                    is_active_flag = 0 AND
+                    activation_code <> '' AND
+                    email <> '' AND
+                    TIMESTAMPDIFF(DAY, date_created, NOW()) >= :1
+                LIMIT 2",  // TODO: remove limit
+                $daysSinceSignup
+            )
+        );
+    }
+
+    /**
+     * Returns array of user account IDs what did not submit content.
+     *
+     * @param boolean $active - true => return active accounts, false => inactive accounts
+     * @param int $monthsSinceSignup
+     * @return array
+     */
+    public static function getUserIdsWithoutSubmittedContent($active, $monthsSinceSignup)
+    {
+        // Get old user accounts that did not submit caches or logs.
+
+        $userIds = self::$db->dbFetchOneColumnArray(
+            self::$db->multiVariableQuery(
+                "SELECT DISTINCT user_id
+                FROM user
+                LEFT JOIN cache_logs USING (user_id)
+                LEFT JOIN caches USING (user_id)
+                WHERE
+                    user.is_active_flag = :1 AND
+                    TIMESTAMPDIFF(MONTH, user.date_created, NOW()) >= :2
+                    AND cache_logs.user_id IS NULL
+                    AND caches.user_id IS NULL
+                LIMIT 2",  // TODO: remove limit
+                $active ? 1 : 0,
+                $monthsSinceSignup
+            )
+        );
+
+        // Probably none of these users have any content reference in the database,
+        // but to be sure, we do an additional precise check.
+
+        $result = [];
+
+        foreach ($userIds as $userId) {
+            if (!User::hasSubmittedContent($userId)) {
+                $result[] = $userId;
+            }
+        }
+
+        return $result;
+    }
+
 }
