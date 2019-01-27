@@ -288,7 +288,7 @@ class DbUpdateController extends BaseController
 
     private function securityCheck($onlyDevelopers = true)
     {
-        if (!$this->isUserLogged() || !$this->loggedUser->hasSysAdminRole() ||
+        if (!$this->userIsLoggedSysAdmin() ||
             ($onlyDevelopers && !$this->ocConfig->inDebugMode())
         ) {
             $this->view->redirect('/');

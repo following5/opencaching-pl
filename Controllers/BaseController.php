@@ -2,6 +2,7 @@
 
 namespace Controllers;
 
+use lib\Objects\BaseObject;
 use lib\Objects\ApplicationContainer;
 use lib\Objects\User\User;
 use lib\Objects\OcConfig\OcConfig;
@@ -62,6 +63,11 @@ abstract class BaseController
     protected function isUserLogged()
     {
         return !is_null($this->loggedUser);
+    }
+
+    protected function userIsLoggedSysAdmin()
+    {
+        return $this->isUserLogged() && $this->loggedUser->hasSysAdminRole();
     }
 
     protected function ajaxJsonResponse($response, $statusCode=null)
@@ -145,4 +151,27 @@ abstract class BaseController
         }
     }
 
+    /**
+     * Returns view URis for the objects defined in BaseObject
+     */
+    protected function getObjectUri($objectType, $id)
+    {
+        switch ($objectType) {
+
+            case BaseObject::OBJECT_TYPE_GEOCACHE:
+                return 'viewcache.php?cacheid=' . $id;
+
+            case BaseObject::OBJECT_TYPE_GEOCACHE_LOG:
+                return 'viewlogs.php?logid=' . $id;
+
+            case BaseObject::OBJECT_TYPE_GEOPATH:
+                return 'powerTrail.php?ptAction=showSerie&ptrail=' . $id;
+
+            case BaseObject::OBJECT_TYPE_USER:
+                return 'viewprofile.php?userid='. $id;
+
+            default:
+                throw new \Exception('unknown object type: '.$objectType);
+        }
+    }
 }

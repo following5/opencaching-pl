@@ -448,7 +448,9 @@ class GeoCache extends GeoCacheCommons
 
     /**
      * Recalculates last_found, founds, notfounds and notes for cache
-     * Saves recalculated values into the DB
+     * Saves recalculated values into the DB.
+     *
+     * See also the CacheStatsValidator class, which does the same for all caches.
      */
     public function recalculateCacheStats()
     {

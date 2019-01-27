@@ -7,6 +7,14 @@ use lib\Objects\OcConfig\OcConfig;
 
 abstract class BaseObject
 {
+    /**
+     * Object types as they are used e.g. in pictures and mp3 tables
+     */
+    const OBJECT_TYPE_GEOCACHE_LOG = 1;
+    const OBJECT_TYPE_GEOCACHE = 2;
+    const OBJECT_TYPE_GEOPATH = 3;
+    const OBJECT_TYPE_USER = 8;
+
     /** @var OcDb */
     protected $db;
 
@@ -65,5 +73,4 @@ abstract class BaseObject
     {
         $this->db = self::db();
     }
-
 }
